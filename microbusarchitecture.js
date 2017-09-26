@@ -52,7 +52,9 @@ array containing the ASCII values, print "Hello world" using node.
  * instruction).
  */
 
-/* VERSION 0.3 */
+/* VERSION 0.4 */
+
+/* USAGE: node microbusarchitecture.js < program.txt */
 
 /* This version is  not correct in that  it lets the  data control the flow,
 rather  than letting  the processor  control  the flow,  but it  nonetheless
