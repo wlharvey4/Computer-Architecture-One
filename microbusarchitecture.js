@@ -23,7 +23,7 @@ array containing the ASCII values, print "Hello world" using node.
 00000001 # register #1
 00000010 # SET register
 00000010 # register #3
-00000101 # PRINT_NUMERIC
+00000110 # PRINT_NUMERIC
 
 */
 
@@ -52,7 +52,9 @@ array containing the ASCII values, print "Hello world" using node.
  * instruction).
  */
 
-/* VERSION 0.1 */
+/* VERSION 0.4 */
+
+/* USAGE: node microbusarchitecture.js < program.txt */
 
 /* This version is  not correct in that  it lets the  data control the flow,
 rather  than letting  the processor  control  the flow,  but it  nonetheless
@@ -107,13 +109,13 @@ class CPU {
 
     this.set;
     this.register_no;
-    this.register; // array
+    this.register_arr; // array
 
     this.save;
 
     this.mul;
-    this.mul_register;
-    this.mul_array;
+    this.mul_register_no;
+    this.mul_arr;
     this.mul_index;
 
     this.InstructionSet = {
@@ -126,11 +128,11 @@ class CPU {
         this.MDR = 0;
         this.set = false;
         this.register_no = null;
-        this.register = [];
+        this.register_arr = [];
         this.save = false;
         this.mul = false;
-        this.mul_register = null;
-        this.mul_array = [];
+        this.mul_register_no = null;
+        this.mul_arr = [];
         this.mul_index = null;
       },
       
@@ -138,7 +140,7 @@ class CPU {
       
       '00000010': (r) => { /* SET: prepares a register to be set, and then sets it */ console.log('SET\n');
         if (this.set) {
-          this.register_no = CPU.registerNo(r);
+          this.register_no = CPU.binary(r);
           this.set = false;
         }
         else {
@@ -149,7 +151,7 @@ class CPU {
 
       '00000100': (d) => { /* SAVE: saves data into a register prepared by set */ console.log('SAVE\n');
         if (this.save) {
-          this.register[this.register_no] = d;
+          this.register_arr[this.register_no] = d;
           this.save = false;
           this.register_no = null;
         }
@@ -161,63 +163,63 @@ class CPU {
 
       '00000101': (r) => { /* MUL: multiplies two registers and places the result in a third register */ console.log('MUL\n');
         if (this.mul) {
-          this.mul_array[this.mul_index++] = r
+          this.mul_arr[this.mul_index++] = r
           if (this.mul_index === 2) {
-            const mult = CPU.binary(this.register[CPU.binary(this.mul_array[0])]) * CPU.binary(this.register[CPU.binary(this.mul_array[1])]);
-            this.register[this.mul_register] = mult;
+            const mult = CPU.binary(this.register_arr[CPU.binary(this.mul_arr[0])]) * CPU.binary(this.register_arr[CPU.binary(this.mul_arr[1])]);
+            this.register_arr[this.mul_register_no] = mult;
             this.mul = false;
             this.mul_index = null;
-            this.mul_array = [];
+            this.mul_arr = [];
           }
         }
         else {
           this.mul = true;
-          this.mul_register = this.register_no;
+          this.mul_register_no = this.register_no;
           this.mul_index = 0;
         }
         return;
       },
 
-      '00001001': () => { /* PRINT_NUMERIC: prints to the console the numeric value of a register */ console.log('PRINT_NUMERIC\n')
-        console.log(`The result is ${this.register[this.register_no]}\n`);
+      '00000110': () => { /* PRINT_NUMERIC: prints to the console the numeric value of a register */ console.log('PRINT_NUMERIC\n')
+        console.log(`The result is ${this.register_arr[this.register_no]}\n`);
         return;
       },
     }
   }
 
-  eval (instruction) {
-    const inst = CPU.removeComment(instruction);
+  eval (instruction) { // evaluation instruction
+    const inst = CPU.removeComment(instruction); // inst is instruction with comments removed
     console.log(`${inst}`);
     if (inst === EMPTY) {console.log('ignoring comment...\n'); return; }
 
     if (this.set) {
-      this.InstructionSet[SET](inst);
+      this.InstructionSet[SET](inst);  // inst is the register to SET
       return;
     }
 
     if (this.save) {
-      this.InstructionSet[SAVE](inst); // here, inst is data
+      this.InstructionSet[SAVE](inst); // inst is data for a SAVE
       this.state();
       return;
     }
 
     if (this.mul) {
-      this.InstructionSet[MUL](inst);
+      this.InstructionSet[MUL](inst);  // inst is data for a MUL
       return;
     }
 
     if (this.InstructionSet[inst]) {
-      this.InstructionSet[inst]();
+      this.InstructionSet[inst]();     // inst is an instruction: SET | SAVE | MUL | PRINT_NUMERIC
     }
     else {
-      console.log(`illegal inst: ${inst}`);
+      console.log(`illegal inst: ${inst}`); 
       this.state();
       throw 'Illegal Instruction';
     }
     return;
   }
 
-  processProgram () {
+  processProgram () { // Entry point
     console.log('starting process...\n');
     this.PC = 0;
 
@@ -225,14 +227,14 @@ class CPU {
       input: stdin
     });
 
-    rl.on('line', (line) => {
+    rl.on('line', (line) => {  // each instruction is loaded one at a time
       console.log(`${line}`);
       this.state();
-      this.eval(line);
+      this.eval(line); // and evaluated
       this.PC++;
     });
 
-    rl.on('close', () => {
+    rl.on('close', () => { // no more data
       console.log('done');
     });
   }
@@ -242,34 +244,19 @@ class CPU {
     console.log(`PC: ${this.PC}`);
     console.log(`set:  ${this.set}`);
     console.log(`register_no: ${this.register_no}`);
-    console.log('registers: ', this.register);
+    console.log('registers: ', this.register_arr);
     
     console.log(`save: ${this.save}`);
     console.log(`mul:  ${this.mul}`);
-    console.log(`mul_register: ${this.mul_register}`);
+    console.log(`mul_register_no: ${this.mul_register_no}`);
     console.log(`mul_index: ${this.mul_index}`);
-    console.log(`mul_array: ${this.mul_array}`);
+    console.log(`mul_array: ${this.mul_arr}`);
     console.log('--------------------\n');
   }
 
+  /* STATIC HELPER FUNCTIONS */
   static removeComment(inst) {
     return inst.replace(COMMENT, EMPTY);
-  }
-
-  static registerNo(inst) {
-    switch (inst) {
-    case '00000000': // register #0
-      return 0;
-      break;
-    case '00000001': // register #1
-      return 1;
-      break;
-    case '00000010': // register #3
-      return 3;
-      break
-    default:
-      throw 'Illegal register number';
-    }
   }
 
   static binary(num) {
