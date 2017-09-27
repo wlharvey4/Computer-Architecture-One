@@ -68,10 +68,14 @@ I/O Bus
 
 ### APIC
 [Advanced Programmable Interrupt Controller](https://en.wikipedia.org/wiki/Advanced_Programmable_Interrupt_Controller)
-# Assignment:
 
-Using the ASCII table, a stack, a program counter, and a tiny set of instructions: set, copy, and print, write a program that contains an array of instructions, a "CPU" that reads them starting at index 0, and another array containing the ASCII values, print "Hello world" using node.
+# Assignment - The Most Basic CPU
 
+The most basic set of instructions inside of the most basic 8 bit CPU.
+
+An 8 bit CPU is one that only has 8 wires available for addresses (specifying where something is), computations, and instructions. With 8 bits, our CPU has a total of 2kb of memory and can only compute values up to 255. The CPU could support 256 instrutions, as well, but we won't need them.
+
+The following file is a very simple program that runs on our CPU.
 
     #inputfile
     00000001 # initialize
@@ -84,15 +88,35 @@ Using the ASCII table, a stack, a program counter, and a tiny set of instruction
     00000100 # SAVE next
     00001001 # 9
     00000010 # SET register
-    00000010 # register #3
+    00000010 # register #2
     00000101 # MUL into last
     00000000 # register #0
     00000001 # register #1
     00000010 # SET register
-    00000010 # register #3
-    00000101 # PRINT_NUMERIC
+    00000010 # register #2
+    00000110 # PRINT_NUMERIC
+
+Your goal is to write a simple CPU core that supports the above instructions. You will need to read the file (as an argument or a stream) via node, then create a program counter that reads the next instruction each time a timer fires. Commands:
+
+    SET # set the address of the next byte to be the active register
+    SAVE # save the value of the next byte into the active register
+    MUL # multiply the values stored in the registers identified by the next
+        # two bytes, saving them into the currently SET register
+    PRINT_NUMERIC # console.log the integer value of the active register
+
+The following command line input:
+
+    node microbusarchitecture.js < inputfile
+
+Should produce
+
+    72
+
+`console.log(72)` is not sufficient.
 
 Extra credit:
+
+Create one new instruction, PRINT_ALPHA, which will output the value of the active register as an ASCII character instead of an integer. Output "Hello World!" using the above Most Basic 8-bit CPU.
 
 The following command line input:
 
